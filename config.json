@@ -3,6 +3,17 @@
   "commands": {
     "start": "start",
     "stop": "stop",
-    "answer": "a"
+    "answer": "a",
+    "js": "js"
+  },
+  "embedColors": {
+    "error": "#ff0077",
+    "success": "#00ff88",
+    "default": "#0099ff"
+  },
+  "embedConfig": {
+    "author": {
+      "name": "CSTrivia"
+    }
   }
 }

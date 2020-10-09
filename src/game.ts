@@ -7,6 +7,8 @@ import {
   User,
 } from "discord.js";
 
+import * as Util from "./helpers";
+import * as config from "../config.json";
 import fetch = require("node-fetch");
 
 type Channel = TextChannel | DMChannel | NewsChannel;
@@ -118,17 +120,40 @@ export class Quiz {
     }
 
     this.currentQuestion = this.questions.pop();
-    this.channel.send(this.currentQuestion.content);
 
-    let message: string = `options:\n\t**A**: ${this.currentQuestion
-      .options[0]}\n\t**B**: ${this.currentQuestion.options[1]}`;
+    const optFields = [
+      {
+        name: "A",
+        value: this.currentQuestion.options[0],
+      },
+      {
+        name: "B",
+        value: this.currentQuestion.options[1],
+      },
+    ];
 
-    if ("2" in this.currentQuestion.options) {
-      message += `\n\t**C**: ${this.currentQuestion.options[2]}\n\t**D**: ${this
-        .currentQuestion.options[3]}`;
+    if (this.currentQuestion.options[2]) {
+      optFields.push(
+        {
+          name: "C",
+          value: this.currentQuestion.options[3],
+        },
+        {
+          name: "D",
+          value: this.currentQuestion.options[3],
+        }
+      );
     }
 
-    this.channel.send(message);
+    const embedMessage = Util.makeEmbed({
+      title: `Question #${this.questions.length}: `,
+      description: this.currentQuestion.content,
+      author: config.embedConfig.author,
+      fields: optFields,
+      color: config.embedColors.success
+    });
+
+    this.channel.send(embedMessage);
     this.state = GameState.AWAITING_ANS;
   }
 

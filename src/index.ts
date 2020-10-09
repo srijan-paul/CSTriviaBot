@@ -2,7 +2,7 @@ import Discord = require("discord.js");
 import { token } from "../token.json";
 import * as config from "../config.json";
 import CommandMap from "./responses";
-import { Quiz, GameState } from "./game";
+import { Quiz } from "./game";
 
 const client = new Discord.Client();
 
