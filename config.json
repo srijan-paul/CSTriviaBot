@@ -1,0 +1,8 @@
+{
+  "prefix": "?",
+  "commands": {
+    "start": "start",
+    "stop": "stop",
+    "answer": "a"
+  }
+}
