@@ -1,5 +1,5 @@
 import Discord = require("discord.js");
-import { commands } from "../config.json";
+import { commands, prefix } from "../config.json";
 import { ClientState } from "./index";
 
 const url = "https://opentdb.com/api.php?amount=10&category=18&difficulty=easy";
@@ -36,7 +36,11 @@ const stopQuiz: Response = (msg, state) => {
 };
 
 const answer: Response = (msg, state) => {
+  let answer: string = msg.content.split(" ")[1];
+  let result = state.quiz.checkAnswer(answer, msg.author);
 
+  if (result) return;
+  msg.channel.send("There is no ongoing quiz.");
 };
 
 const CommandMap: Map<string, Response> = new Map([

@@ -4,6 +4,7 @@ import {
   TextChannel,
   DMChannel,
   NewsChannel,
+  User,
 } from "discord.js";
 
 import fetch = require("node-fetch");
@@ -29,10 +30,10 @@ interface Question {
   difficulty: "easy" | "medium" | "hard";
   category: string;
   options: {
+    [0]: string;
     [1]: string;
-    [2]: string;
+    [2]?: string;
     [3]?: string;
-    [4]?: string;
   };
   correct_answer: number;
 }
@@ -65,7 +66,6 @@ function makeQuestions(results: any): Question[] {
       correct_answer: correct_index,
       category: r.category,
     };
-
     questions.push(q);
   }
 
@@ -78,6 +78,9 @@ export class Quiz {
   private questions: Question[] = [];
   private static readonly DB_URL = "https://opentdb.com/api.php?amount=10&category=18&difficulty=easy";
   private currentQuestion: Question;
+  private channel: Channel;
+  private userScores = new Map<User, number>();
+  private static pointsPerAnswer = 10;
 
   constructor(client: Client) {
     this.client = client;
@@ -99,38 +102,84 @@ export class Quiz {
           return false;
         }
 
+        this.channel = channel;
         this.state = GameState.PLAYING;
         this.questions = makeQuestions(json.results);
-        this.sendQuestion(channel);
+        this.step();
       });
 
     return true;
   }
 
-  private sendQuestion(channel: Channel) {
+  private sendQuestion() {
     if (this.questions.length == 0) {
-      console.error('all questions used up.');
+      console.error("all questions used up.");
+      return;
     }
 
-    channel.send(this.questions.pop());
-    channel.send(
-      `
-      0: ${this.questions[0].options[0]}
-      1: ${this.questions[0].options[1]}
-      2: ${this.questions[0].options[2]}
-      3: ${this.questions[0].options[3]}
-    `
-    );
+    this.currentQuestion = this.questions.pop();
+    this.channel.send(this.currentQuestion.content);
+
+    let message: string = `options:\n\t**A**: ${this.currentQuestion
+      .options[0]}\n\t**B**: ${this.currentQuestion.options[1]}`;
+
+    if ("2" in this.currentQuestion.options) {
+      message += `\n\t**C**: ${this.currentQuestion.options[2]}\n\t**D**: ${this
+        .currentQuestion.options[3]}`;
+    }
+
+    this.channel.send(message);
+    this.state = GameState.AWAITING_ANS;
+  }
+
+  private endQuiz() {
+    let scores = Array.from(this.userScores).map((e): [string, number] => [
+      e[0].username,
+      e[1],
+    ]);
+    scores.sort((a, b) => a[1] - b[1]);
+
+    this.channel.send(`${scores.map(entry => `${entry[0]}: ${entry[1]}`)}`);
+    this.stop(this.channel);
+    this.state = GameState.STOPPED;
+  }
+
+  private step() {
+    if (this.questions.length > 0) {
+      this.sendQuestion();
+    } else {
+      this.endQuiz();
+    }
   }
 
   public stop(channel: Channel): boolean {
     if (this.state == GameState.STOPPED) return false;
     this.questions = [];
     this.state = GameState.STOPPED;
+    this.channel = null;
     return true;
   }
 
-  public checkAnswer(ans: number) {
-    
+  public checkAnswer(ans: string, user: User) {
+    if (this.state != GameState.AWAITING_ANS) return false;
+
+    const opt = ans.toLowerCase().charCodeAt(0) - 97; // turn it to 'a | 'b' | 'c' | 'd'
+
+    if (this.currentQuestion.correct_answer == opt) {
+      this.channel.send(
+        `"${this.currentQuestion.options[
+          opt
+        ]}" was the correct answer! +10 points to ${user.tag}.`
+      );
+
+      this.userScores.set(
+        user,
+        (this.userScores.get(user) || 0) + Quiz.pointsPerAnswer
+      );
+
+      this.step();
+    }
+
+    return true;
   }
 }
