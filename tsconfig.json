@@ -7,5 +7,10 @@
     "outDir": "build",
     "resolveJsonModule": true
   },
-  "include": ["./src/*"]
+  "include": ["./src/**/*"],
+  "electronWebpack": {
+    "externals": {
+        "nedb": "commonjs nedb"
+    }
+}
 }

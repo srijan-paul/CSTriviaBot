@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title></title>
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.20.0/axios.min.js"
+      integrity="sha512-quHCp3WbBNkwLfYUMd+KwBAgpVukJu5MncuQaWXgCrfgcxCJAq/fo+oqrRKOj+UKEmyMCG3tb8RB63W+EmrOBg=="
+      crossorigin="anonymous"
+    ></script>
+    <style>
+      .container {
+        width: 80%;
+        margin: auto;
+        margin-top: 10%;
+        font-family: "Courier New", Courier, monospace;
+      }
+
+      body {
+        background-color: #f2f1ed;
+      }
+
+      input[type="text"] {
+        width: 40%;
+        padding: 12px 20px;
+        margin: 8px 0;
+        box-sizing: border-box;
+      }
+
+      .correct {
+        border: 2px solid;
+        border-radius: 2%;
+        border-color: #00ffcc;
+      }
+
+      button {
+        width: 20%;
+        font-size: 20px;
+      }
+
+      textarea {
+        font-size: 20px;
+        font-family: sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <div class="container">
+        <textarea name="Question" id="question" cols="80" rows="10"> </textarea>
+        <input
+          type="text"
+          name="correct answer"
+          class="correct"
+          id="correct"
+          placeholder="Correct answer"
+        />
+        <input
+          type="text"
+          name="wrong answer"
+          class="wrong"
+          placeholder="Incorrect answer 1"
+        />
+        <input
+          type="text"
+          name="wrong answer"
+          class="wrong"
+          placeholder="Incorrect answer 2"
+        />
+        <input
+          type="text"
+          name="wrong answer"
+          class="wrong"
+          placeholder="Incorrect answer 3"
+        />
+
+        <button id="add-btn">Add question</button>
+      </div>
+    </div>
+
+    <script>
+      const btn = document.getElementById("add-btn");
+      const question = document.getElementById("question");
+      const incorrectOpts = document.querySelectorAll(".wrong");
+      const correctOpt = document.getElementById("correct");
+
+      btn.onclick = () => {
+        const opts = [];
+        incorrectOpts.forEach((e) => opts.push(e.value));
+        opts.push(correctOpt.value);
+        
+        const data = {
+          question: question.value,
+          type: "multiple",
+          answer: 4,
+          category: "cs",
+          options: opts,
+        };
+
+        axios({
+          url: "/",
+          method: "post",
+          data: data,
+        });
+      };
+    </script>
+  </body>
+</html>
