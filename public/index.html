@@ -91,7 +91,7 @@
         const opts = [];
         incorrectOpts.forEach((e) => opts.push(e.value));
         opts.push(correctOpt.value);
-        
+
         const data = {
           question: question.value,
           type: "multiple",
@@ -99,6 +99,9 @@
           category: "cs",
           options: opts,
         };
+
+        question.value = correctOpt.value = "";
+        incorrectOpts.forEach((e) => (e.value = ""));
 
         axios({
           url: "/",
