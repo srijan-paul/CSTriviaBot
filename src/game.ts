@@ -10,6 +10,7 @@ import {
 import * as Util from "./helpers";
 import * as config from "../config.json";
 import fetch = require("node-fetch");
+import DataStore = require("nedb");
 
 type Channel = TextChannel | DMChannel | NewsChannel;
 
@@ -74,6 +75,27 @@ function makeQuestions(results: any): Question[] {
   return questions;
 }
 
+function makeQuestionsFromDocs(results: any[]) {
+  const questions: Question[] = [];
+
+  for (let r of results) {
+    const options = r.options;
+    let correct_answer = options.pop();
+    const correct_index = Math.floor(Math.random() * options.length);
+    options.splice(correct_index, 0, correct_answer);
+
+    questions.push({
+      content: r.question,
+      type: getType(r.type),
+      difficulty: "medium",
+      category: r.category,
+      options: options,
+      correct_answer: correct_index,
+    });
+  }
+  return questions;
+}
+
 export class Quiz {
   private state = GameState.STOPPED;
   private readonly client: Client;
@@ -83,6 +105,10 @@ export class Quiz {
   private channel: Channel;
   private userScores = new Map<User, number>();
   private static pointsPerAnswer = 10;
+  private static qDatabase = new DataStore({
+    filename: "db/questions.db",
+    autoload: true,
+  });
 
   constructor(client: Client) {
     this.client = client;
@@ -93,24 +119,49 @@ export class Quiz {
       return false;
     }
 
-    fetch(Quiz.DB_URL) // get the data
-      .then(res => res.json()) // parse JSON
-      .then(json => {
-        if (json.response_code != 0) {
-          channel.send(
-            "An error occured while trying to fetch questions. please try again later. Erro code was: ",
-            json.response_code
-          );
-          return false;
-        }
+    Quiz.qDatabase.find({ category: "cs" }, (err, docs) => {
+      if (err) {
+        channel.send(
+          "An internal error occured while trying to fetch questions."
+        );
+        return false;
+      }
 
-        this.channel = channel;
-        this.state = GameState.PLAYING;
-        this.questions = makeQuestions(json.results);
-        this.step();
-      });
+      this.channel = channel;
+      this.state = GameState.PLAYING;
+      this.questions = makeQuestionsFromDocs(docs);
+      this.step();
+    });
 
     return true;
+  }
+
+  private makeOptionFields(question: Question) {
+    const optFields = [
+      {
+        name: "A",
+        value: question.options[0],
+      },
+      {
+        name: "B",
+        value: question.options[1],
+      },
+    ];
+
+    if (question.options[2]) {
+      optFields.push(
+        {
+          name: "C",
+          value: question.options[2],
+        },
+        {
+          name: "D",
+          value: question.options[3],
+        }
+      );
+    }
+
+    return optFields;
   }
 
   private sendQuestion() {
@@ -121,36 +172,12 @@ export class Quiz {
 
     this.currentQuestion = this.questions.pop();
 
-    const optFields = [
-      {
-        name: "A",
-        value: this.currentQuestion.options[0],
-      },
-      {
-        name: "B",
-        value: this.currentQuestion.options[1],
-      },
-    ];
-
-    if (this.currentQuestion.options[2]) {
-      optFields.push(
-        {
-          name: "C",
-          value: this.currentQuestion.options[3],
-        },
-        {
-          name: "D",
-          value: this.currentQuestion.options[3],
-        }
-      );
-    }
-
     const embedMessage = Util.makeEmbed({
       title: `Question #${this.questions.length}: `,
       description: this.currentQuestion.content,
       author: config.embedConfig.author,
-      fields: optFields,
-      color: config.embedColors.success
+      fields: this.makeOptionFields(this.currentQuestion),
+      color: config.embedColors.success,
     });
 
     this.channel.send(embedMessage);
