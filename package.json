@@ -21,10 +21,16 @@
   "dependencies": {
     "@types/express": "^4.17.8",
     "@types/node": "^14.11.8",
+    "@vue/cli": "^4.5.9",
+    "discord-command-parser": "^1.5.3",
     "discord.js": "^12.3.1",
+    "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "firebase": "^8.1.1",
+    "firebase-admin": "^9.4.1",
     "nedb": "^1.8.0",
-    "node-fetch": "^2.6.1"
+    "node-fetch": "^2.6.1",
+    "vue": "^2.6.12"
   },
   "devDependencies": {
     "@types/nedb": "^1.8.11"

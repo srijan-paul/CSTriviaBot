@@ -1,12 +1,14 @@
 import Discord = require("discord.js");
-import { commands, prefix } from "../config.json";
+import { commands, prefix, ballAnswers } from "../config.json";
 import { ClientState } from "./index";
 import vm = require("vm");
+import * as util from "./helpers";
+import db, { addUserToDB, findUserById, userDB } from "./database";
 
 export type Response = (
   msg: Discord.Message,
   state: ClientState,
-  ...args: string[]
+  args: string[]
 ) => void;
 
 const startQuiz: Response = (msg, state) => {
@@ -33,8 +35,8 @@ const stopQuiz: Response = (msg, state) => {
   msg.channel.send("Quiz stopped.");
 };
 
-const answer: Response = (msg, state) => {
-  let answer: string = msg.content.split(" ")[1];
+const answer: Response = (msg, state, args) => {
+  let answer: string = args[0];
   let result = state.quiz.checkAnswer(answer, msg.author);
 
   if (result) return;
@@ -42,11 +44,11 @@ const answer: Response = (msg, state) => {
 };
 
 /**
- * 
+ *
  * @param msg message object.
  */
 
-const interpretJS: Response = msg => {
+const interpretJS: Response = (msg) => {
   const text = msg.content;
   let start = text.indexOf("```") + 3;
   const end = text.lastIndexOf("```");
@@ -68,7 +70,7 @@ const interpretJS: Response = msg => {
   const context = {
     console: {
       log(...args: any[]) {
-        args.forEach(e => (out += e));
+        args.forEach((e) => (out += e));
         out += "\n";
       },
     },
@@ -77,9 +79,11 @@ const interpretJS: Response = msg => {
   try {
     vm.runInContext(code, vm.createContext(context), { timeout: 50 });
     msg.channel.send(
-      `\`\`\`${out.length < 200
-        ? out.toString()
-        : out.substr(0, 200) + "... (log hidden)"}\`\`\``
+      `\`\`\`${
+        out.length < 200
+          ? out.toString()
+          : out.substr(0, 200) + "... (log hidden)"
+      }\`\`\``
     );
     msg.react("\u2705");
   } catch (e) {
@@ -88,12 +92,83 @@ const interpretJS: Response = msg => {
   }
 };
 
+const userInfo: Response = async (msg, state, args) => {
+  let user = msg.mentions.users.first();
+  if (!user) user = msg.author;
+
+  findUserById(user.id, (userData) => {
+    const description = userData?.get("description") || "commoner.";
+    const rep = userData?.get("reputation") || 0;
+
+    const embedMessage = util.makeEmbed({
+      title: user.username,
+      description: description,
+      author: { name: "User Info" },
+      fields: [
+        {
+          name: "id",
+          value: user.id,
+          inline: true,
+        },
+        {
+          name: "reputation",
+          value: rep,
+          inline: true,
+        },
+      ],
+      imageURL: user.displayAvatarURL(),
+    });
+
+    msg.channel.send(embedMessage);
+  });
+};
+
+const eightBall: Response = (msg) => {
+  const answer = ballAnswers[Math.floor(Math.random() * ballAnswers.length)];
+  msg.channel.send(answer);
+};
+
+
+const setRep = (msg, amount: number) => {
+  const user = msg.mentions.users.first();
+  if (!user) {
+    msg.channel.send("Use: `?rep @user`.");
+    return;
+  } else if (user.id == msg.author.id) {
+    msg.channel.send("Can't give reputation to self. ;)");
+    return;
+  }
+
+  findUserById(user.id, (userData) => {
+    let rep = amount;
+    if (userData && userData.exists) {
+      rep = userData.get("reputation") + amount;
+      userData.ref.update({ reputation: rep });
+    } else {
+      addUserToDB(user).then((ref) => ref.update({ reputation: rep }));
+    }
+
+    msg.channel.send(
+      `Gave ${amount} reputation to ${user.username}. Total reputation: ${rep}.`
+    );
+  });
+};
+
+const addRep = (msg) => setRep(msg, 1);
+const takeRep = (msg) => setRep(msg, -1);
+
+
 const CommandMap: Map<string, Response> = new Map([
   // prettier-ignore
   [commands.start, startQuiz],
   [commands.stop, stopQuiz],
   [commands.answer, answer],
   [commands.js, interpretJS],
+  ["ping", (msg) => msg.channel.send("pong")],
+  [commands.info, userInfo],
+  [commands.eightBall, eightBall],
+  [commands.rep, addRep],
+  [commands.negrep, takeRep]
 ]);
 
 export default CommandMap;

@@ -4,7 +4,12 @@
     "start": "start",
     "stop": "stop",
     "answer": "a",
-    "js": "js"
+    "info": "info",
+    "js": "js",
+    "eightBall": "8ball",
+    "rep": "rep",
+    "negrep": "negrep",
+    "setinfo": "setinfo"
   },
   "embedColors": {
     "error": "#ff0077",
@@ -15,5 +20,17 @@
     "author": {
       "name": "CSTrivia"
     }
-  }
+  },
+  "ballAnswers": [
+    "Yes, definitely.",
+    "Hell yes! Absolutely",
+    "Yep",
+    "Why yes, ofcourse.",
+    "YES! YES! YES! YES!",
+    "Not in a million years.",
+    "Nope. Never. No. just no.",
+    "Ewwww nooo",
+    "Lmao never",
+    "NO! NO! NO! NO!"
+  ]
 }

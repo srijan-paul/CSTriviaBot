@@ -1,41 +1,49 @@
 import Discord = require("discord.js");
-import { token } from "../token.json";
 import * as config from "../config.json";
 import CommandMap from "./responses";
 import { Quiz } from "./game";
+import db from "./database";
 
-const client = new Discord.Client();
+import { parse } from "discord-command-parser";
+require("dotenv/config");
+
+const token = process.env.TOKEN;
+
+const bot = new Discord.Client();
 
 export interface ClientState {
   quiz: Quiz;
 }
 
 const state: ClientState = {
-  quiz: new Quiz(client),
+  quiz: new Quiz(bot),
 };
 
-client.on("ready", () => {
-  console.log(`Logged in as ${client.user.tag} !`);
+bot.on("ready", () => {
+  console.log(`Logged in as ${bot.user.tag} !`);
 });
 
-client.on("message", msg => {
+bot.on("message", msg => {
   if (msg.content[0] == config.prefix) {
-    const content = msg.content;
+    const parsed = parse(msg, config.prefix);
 
-    let end = content.indexOf(" ");
-
-    if (end == -1) {
-      end = content.length;
-    }
-
-    const command = content.substring(1, end);
-
-    const callback = CommandMap.get(command);
-
-    if (callback) {
-      callback(msg, state);
+    if (parsed.success) {
+      const callback = CommandMap.get(parsed.command);
+      if (callback) {
+        callback(msg, state, parsed.arguments);
+      }
     }
   }
 });
 
-client.login(token);
+bot.on("guildCreate", async gData => {
+  db.collection("guilds").doc(gData.id).set({
+    id: gData.id,
+    name: gData.name,
+    ownerName: gData.owner.user.username,
+    ownerId: gData.owner.id,
+    prefix: config.prefix,
+  });
+});
+
+bot.login(token);
