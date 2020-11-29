@@ -1,5 +1,7 @@
 # CSTriviaBot - Sharpy
 
+[screenshot](!https://i.imgur.com/GcYvXyB.gif)
+
 A general purpose discord bot. It can conduct quizzes, maintain user reputation, show cat and dog pics
 and a lot more fun stuff.
 
