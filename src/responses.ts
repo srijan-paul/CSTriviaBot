@@ -3,13 +3,20 @@ import { commands, prefix, ballAnswers } from "../config.json";
 import { ClientState } from "./index";
 import vm = require("vm");
 import * as util from "./helpers";
-import db, { addUserToDB, findUserById, userDB } from "./database";
+import axios = require("axios");
+import { addUserToDB, findHeroByName, findUserById } from "./database";
+import Axios from "axios";
 
 export type Response = (
   msg: Discord.Message,
   state: ClientState,
   args: string[]
 ) => void;
+
+type DiscordChannel =
+  | Discord.TextChannel
+  | Discord.DMChannel
+  | Discord.NewsChannel;
 
 const startQuiz: Response = (msg, state) => {
   let quizStarted = state.quiz.start(msg.channel);
@@ -128,7 +135,6 @@ const eightBall: Response = (msg) => {
   msg.channel.send(answer);
 };
 
-
 const setRep = (msg, amount: number) => {
   const user = msg.mentions.users.first();
   if (!user) {
@@ -157,6 +163,64 @@ const setRep = (msg, amount: number) => {
 const addRep = (msg) => setRep(msg, 1);
 const takeRep = (msg) => setRep(msg, -1);
 
+function sendResponseURL(channel: DiscordChannel, url: string) {
+  Axios.get(url).then((res) => {
+    if (res.status != 200) return;
+    channel.send(res.data.url);
+  });
+}
+
+const dogImage: Response = (msg) =>
+  sendResponseURL(msg.channel, "https://random.dog/woof.json");
+
+const catImage: Response = (msg) => {
+  Axios.get("https://api.thecatapi.com/v1/images/search").then((res) => {
+    if (res.status != 200) return;
+    msg.channel.send(res.data[0].url);
+  });
+};
+
+function makeHeroEmbed(
+  hero: FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>
+) {
+  const fieldNames = ["name", "gender", "race", "alignment"];
+  let fields = [];
+  for (const name of fieldNames) {
+    fields.push({
+      name: name,
+      value: hero.get(name),
+    });
+  }
+
+  return util.makeEmbed({
+    title: hero.get("name"),
+    description: hero.get("work"),
+    author: { name: hero.get("name") },
+    fields: fields,
+    imageURL: hero.get("image"),
+  });
+}
+
+const heroSearch: Response = (msg, state, args) => {
+  const heroName = args[0];
+  if (!heroName) {
+    msg.channel.send(
+      'Use: `?hero HeroName` for single word names and `?hero "Hero Name" for longer names with spaces.'
+    );
+    return;
+  }
+
+  findHeroByName(heroName, (heroData) => {
+    if (heroData && heroData.exists) {
+      const embed = makeHeroEmbed(heroData);
+      msg.channel.send(embed);
+    } else {
+      msg.channel.send(
+        `Unknown hero "${heroName}". Try using proper casing for the name. e.g- "Abin Sur" instead of "abin sur" `
+      );
+    }
+  });
+};
 
 const CommandMap: Map<string, Response> = new Map([
   // prettier-ignore
@@ -168,7 +232,10 @@ const CommandMap: Map<string, Response> = new Map([
   [commands.info, userInfo],
   [commands.eightBall, eightBall],
   [commands.rep, addRep],
-  [commands.negrep, takeRep]
+  [commands.negrep, takeRep],
+  [commands.randomDog, dogImage],
+  [commands.randomCat, catImage],
+  [commands.heroSearch, heroSearch],
 ]);
 
 export default CommandMap;

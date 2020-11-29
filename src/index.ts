@@ -23,7 +23,7 @@ bot.on("ready", () => {
   console.log(`Logged in as ${bot.user.tag} !`);
 });
 
-bot.on("message", msg => {
+bot.on("message", (msg) => {
   if (msg.content[0] == config.prefix) {
     const parsed = parse(msg, config.prefix);
 
@@ -36,14 +36,16 @@ bot.on("message", msg => {
   }
 });
 
-bot.on("guildCreate", async gData => {
-  db.collection("guilds").doc(gData.id).set({
-    id: gData.id,
-    name: gData.name,
-    ownerName: gData.owner.user.username,
-    ownerId: gData.owner.id,
-    prefix: config.prefix,
-  });
+bot.on("guildCreate", (gData) => {
+  db.collection("guilds")
+    .doc(gData.id)
+    .set({
+      id: gData.id,
+      name: gData.name,
+      ownerName: gData.owner ? gData.owner.user.username : "unknown",
+      ownerId: gData.ownerID,
+      prefix: config.prefix,
+    });
 });
 
 bot.login(token);

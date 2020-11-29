@@ -72,7 +72,7 @@ typings/
 .env
 .env.test
 service-account.json
-
+scripts/all_heroes.json
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache

@@ -9,7 +9,10 @@
     "eightBall": "8ball",
     "rep": "rep",
     "negrep": "negrep",
-    "setinfo": "setinfo"
+    "setinfo": "setinfo",
+    "randomDog": "dogpic",
+    "randomCat": "catpic",
+    "heroSearch": "hero"
   },
   "embedColors": {
     "error": "#ff0077",
