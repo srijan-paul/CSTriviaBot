@@ -34,3 +34,12 @@ As of now, the following commands are available:
 - `?catpic` - post a random iamge or gif of a cute cat 🐱.
 - `?hero <name>` - post the stats, info and image of a superhero from comic books or movies! (eg - `?hero Spider-Man`).
 - `?8ball <question>` - Use the magic 8 ball to answer a question! (eg - `?8ball will I find happiness in life?` ).
+
+# Credits
+
+I've used a couple of generous 3rd party APIs to make this bot. The database is hosted on google firebase, and the following
+APIs have been used:
+
+- [superhero-api](https://akabab.github.io/superhero-api/) I used a modified version of this API to fetch the image and stats of superheroes.
+- [random-dog](https://random.dog/) Used for the `?dogpics` command.
+- [theCatApi](https://thecatapi.com/) Used for the `?catpics` command
