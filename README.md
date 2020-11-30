@@ -36,6 +36,7 @@ As of now, the following commands are available:
 - `?catpic` - post a random iamge or gif of a cute cat 🐱.
 - `?hero <name>` - post the stats, info and image of a superhero from comic books or movies! (eg - `?hero Spider-Man`).
 - `?8ball <question>` - Use the magic 8 ball to answer a question! (eg - `?8ball will I find happiness in life?` ).
+- `?info <@user>` - see a user's ID, avatar, bio and reputation.
 
 # Credits
 
